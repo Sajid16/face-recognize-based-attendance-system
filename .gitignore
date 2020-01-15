@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+DS_Store
+attendance-env/
+.idea/
+cmake.tar.gz
+cmake-3.9.0-rc5/
+device/
+saved_images/
+check_images/
+verify_images/
+venv_python_three_six/

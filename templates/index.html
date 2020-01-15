@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <title>POWERBITS</title>
+</head>
+<body>
+
+<div class="container" style="margin-top:50px;">
+    <div>
+    </div>
+
+    <form action="{{ url_for('handle_branch_code') }}" method="post">
+        <center>
+            <select name="branch_code">
+                {% if branch %}
+                {% for branch in branch.branch %}
+                <option value="{{branch}}">{{branch}}</option>
+<!--                {% for branch in branch.branch_code %}-->
+
+<!--                {% endfor %}-->
+                {% endfor %}
+                {% endif %}
+            </select>
+            <button class="btn-success" type="submit">Submit</button>
+        </center>
+    </form>
+
+</div>
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

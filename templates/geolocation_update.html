@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.map"></script>
+<body>
+
+<form id="jsform" name="jsform" action="{{ url_for('location_update') }}" method="post">
+    <input hidden id="latitude" name="latitude" type="text">
+    <input hidden id="longitude" name="longitude" type="text">
+    <input hidden id="altitude" name="altitude" type="text">
+    <button hidden name="dataRefreshButton" type=submit >Submit</button>
+
+</form>
+
+<script>
+window.onload = function(){
+if(navigator.geolocation)
+    navigator.geolocation.getCurrentPosition(handlesucces, onError);
+    window.setTimeout(function() { document.jsform.submit(); }, 1000);
+}
+
+ function handlesucces(location) {
+    document.getElementById("latitude").value = location.coords.latitude;
+    console.log(location.coords.latitude);
+    document.getElementById("longitude").value = location.coords.longitude;
+    document.getElementById("altitude").value = location.coords.altitude;
+}
+
+ function onError() {
+document.write("Error");
+}
+
+<!--document.getElementById('jsform').submit();-->
+
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Post an Image test</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="static/webcam.js"></script>
+    <script src="static/webcam.min.js"></script>
+</head>
+<style>
+    /* mirror the image */
+    video, canvas {
+    transform: scale(-1, 1); /*For Firefox (& IE) */
+    -webkit-transform: scale(-1, 1); /*for Chrome & Opera (& Safari) */
+}
+
+
+
+</style>
+<body>
+
+<div class="container">
+    <section class="main_content" style="margin-top:20px;">
+        <div class="row">
+            {% if my_dict %}
+            <input hidden id="compcde" value="{{my_dict.company_code}}">
+            <input hidden id="user_id" value="{{my_dict.user_id}}">
+            {% endif %}
+            <div class="col-sm-6" style="text-align:right;">
+                <video autoplay id="myVideo"></video>
+            </div>
+
+            <div class="col-sm-6">
+                <div id="results"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6" style="text-align:center; width:100%;">
+                <input onclick="sendImagefromCanvas(); take_snapshot();" type="button" value="capture">
+            </div>
+        </div>
+    </section>
+</div>
+
+<!--<video autoplay id="myVideo"></video>-->
+<!--<input onclick="sendImagefromCanvas(); take_snapshot();" type="button" value="capture">-->
+<!--<div id="results"></div>-->
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+
+<script>
+
+var video = document.querySelector("#myVideo");
+let v = document.getElementById("myVideo");
+//create a canvas to grab an image for upload
+let imageCanvas = document.createElement('canvas');
+let imageCtx = imageCanvas.getContext("2d");
+
+
+navigator.getMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+
+navigator.getMedia({video: true}, function(stream) {
+
+  // webcam is available
+  video.srcObject = stream;
+      sendImagefromCanvas();
+}, function() {
+    alert("You have to give the permission to access the webcam and reload it again");
+  // webcam is not available
+});
+
+    //Add file blob to a form and post
+    function postFile(file) {
+        console.log(file)
+        var compcde = document.getElementById("compcde").value;
+        var user_id = document.getElementById("user_id").value;
+        let formdata = new FormData();
+        formdata.append("image", file);
+        formdata.append("compcde", compcde);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/image', true);
+        console.log('Message:xhr: ', xhr.open('POST', '/image', true));
+        xhr.onload = function () {
+            if (this.status === 200)
+                console.log(this.response);
+            else
+                console.error(xhr);
+        };
+        xhr.send(formdata);
+        console.log("Send ")
+
+    }
+
+    //Get the image from the canvas
+    function sendImagefromCanvas() {
+
+        //Make sure the canvas is set to the current video size
+        imageCanvas.width = v.videoWidth;
+        imageCanvas.height = v.videoHeight;
+
+        imageCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight);
+
+        //Convert the canvas to blob and post the file
+        imageCanvas.toBlob(postFile, 'image/jpeg');
+    }
+
+    window.onload = function () {
+
+        //Get camera video
+        navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: false})
+            .then(stream => {
+                v.srcObject = stream;
+            })
+            .catch(err => {
+                console.log('navigator.getUserMedia error: ', err)
+            });
+
+    };
+
+
+
+
+Webcam.set({
+  width: 320,
+  height: 240,
+  image_format: 'jpeg',
+  jpeg_quality: 90
+ });
+ Webcam.attach( '#myVideo' );
+
+<!-- Code to handle taking the snapshot and displaying it locally -->
+function take_snapshot() {
+
+ // take snapshot and get image data
+ Webcam.snap( function(data_uri) {
+  // display results in page
+  document.getElementById('results').innerHTML =
+  '<img src="'+data_uri+'"/>';
+  } );
+}
+
+
+</script>
+</body>
+</html>

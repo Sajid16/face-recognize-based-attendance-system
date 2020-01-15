@@ -1,0 +1,33 @@
+.emp_id{
+    margin-left:41%;
+}
+
+@media only screen and (max-width: 1200px) {
+  .emp_id {
+    margin-left: 29%;
+  }
+}
+@media only screen and (max-width: 1000px) {
+  .emp_id {
+    margin-left: 3%;
+  }
+}
+
+.btn{
+    margin-left: 40%;
+    width: 60%;
+
+}
+
+@media only screen and (max-width: 1200px) {
+  .btn {
+    margin-left: 28%;
+    width: 71%;
+  }
+}
+@media only screen and (max-width: 1000px) {
+  .btn {
+    margin-left: 2%;
+    width: 100%;
+  }
+}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Registration</title>
+    <!--    <meta http-equiv="refresh" content="8;" />-->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/style.css" rel="stylesheet">
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="static/webcam.js"></script>
+    <script src="static/webcam.min.js"></script>
+</head>
+<style>
+    /* mirror the image */
+    video, canvas {
+    transform: scale(-1, 1); /*For Firefox (& IE) */
+    -webkit-transform: scale(-1, 1); /*for Chrome & Opera (& Safari) */
+}
+
+
+
+
+</style>
+
+<body style="background-color: #2578ce;">
+<p hidden id="ip"></p>
+
+<div class="container">
+    <section class="main_content" style="margin-top:20px;">
+        <h1 style="color: #fffecc; text-align: center; font-weight: bold; margin-bottom: 25px;">Employee Profile
+            Registration</h1>
+        <form>
+            <div class="row" style="margin-bottom: 20px;">
+                <div class="col-6">
+                    <div class="emp_id">
+                        <label style="color: #fffecc; font-weight: bold;">Employee ID</label>
+                        <input class="form-control" id="eid" placeholder="Employee ID" required style="width: 100%;"
+                               type="text">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label style="color: #fffecc; font-weight: bold;">Select Office</label>
+                    {% if my_dict %}
+                    <select class="browser-default custom-select" name="branch_code">
+                        {% for branch in my_dict.branch %}
+                        <option value="{{branch}}">{{branch}}</option>
+                        {% endfor %}
+                    </select>
+                    <input hidden id="compcde" value="{{my_dict.company_code}}">
+                    <input hidden id="user_id" value="{{my_dict.user_id}}">
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+
+        <div class="row">
+            <div class="col-sm-6" style="text-align:right;">
+                <video autoplay id="myVideo"></video>
+            </div>
+            <div class="col-sm-6">
+                <div id="results"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <input class="btn btn-success" onclick="check_eid()"
+                       type="button" value="capture">
+            </div>
+            <div class="col-6"></div>
+        </div>
+    </section>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.map"></script>
+
+
+<script>
+var ip;
+$.getJSON("https://api.ipify.org?format=json",
+                                          function(data) {
+
+            // Setting text of element P with id ip
+            $("#ip").html(data.ip);
+            ip = data['ip'];
+})
+
+var video = document.querySelector("#myVideo");
+let v = document.getElementById("myVideo");
+//create a canvas to grab an image for upload
+let imageCanvas = document.createElement('canvas');
+let imageCtx = imageCanvas.getContext("2d");
+
+navigator.getMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+
+navigator.getMedia({video: true}, function(stream) {
+
+  // webcam is available
+  video.srcObject = stream;
+      sendImagefromCanvas();
+}, function() {
+    alert("You have to give the permission to access the webcam and reload it again");
+  // webcam is not available
+});
+
+    function check_eid(){
+        eid =  document.getElementById("eid").value;
+        if (eid == '')
+        {
+            alert("Employee Id is required!")
+        }
+        else
+        {
+             sendImagefromCanvas()
+             take_snapshot()
+        }
+    }
+
+
+    //Add file blob to a form and post
+    function postFile(file) {
+        var eid = document.getElementById("eid").value;
+        console.log('eid value up= ', eid);
+        var branch_code = document.getElementsByName("branch_code")[0].value;
+        console.log(branch_code)
+        var compcde = document.getElementById("compcde").value;
+        var user_id = document.getElementById("user_id").value;
+        console.log(file)
+        let formdata = new FormData();
+        formdata.append("image", file);
+        formdata.append("emp", eid);
+        formdata.append("compcde", compcde);
+        formdata.append("branch_code", branch_code);
+        formdata.append("ip", ip);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/image_saved', true);
+        console.log('Message:xhr: ', xhr.open('POST', '/image_saved', true));
+        xhr.onload = function () {
+            if (this.status === 200)
+            {
+                console.log('outside if response is: '+this.response);
+                if(this.response == 'ok')
+                {
+                    console.log('inside if response is: '+this.response);
+                    alert("Registration Has Completed Successfully!");
+                    location.reload(true);
+                }
+                else if(this.response == 'multipleface')
+                {
+                    alert("More than one face found");
+                    location.reload(true);
+                }
+                else if(this.response == 'image_already_registered')
+                {
+                    alert("Image is already registered.");
+                    location.reload(true);
+                }
+                else if(this.response == 'noface'){
+                    console.log('inside if response is: '+this.response);
+                    alert("No face found. Please Register properly!");
+                    location.reload(true);
+                }
+                else if(this.response == 'fail')
+                {
+                    alert("Employee ID is Already Registered");
+                    location.reload(true);
+                }
+            }
+            else
+                console.error(xhr);
+        };
+        xhr.send(formdata);
+        console.log("Send ")
+    }
+
+    //Get the image from the canvas
+    function sendImagefromCanvas() {
+        //Make sure the canvas is set to the current video size
+        imageCanvas.width = v.videoWidth;
+        imageCanvas.height = v.videoHeight;
+
+        imageCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight);
+
+        //Convert the canvas to blob and post the file
+        imageCanvas.toBlob(postFile, 'image/jpeg');
+    }
+
+    window.onload = function () {
+
+        //Get camera video
+        navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: false})
+            .then(stream => {
+                v.srcObject = stream;
+            })
+            .catch(err => {
+                console.log('navigator.getUserMedia error: ', err)
+            });
+
+    };
+
+Webcam.set({
+  width: 320,
+  height: 240,
+  image_format: 'jpeg',
+  jpeg_quality: 90
+ });
+ Webcam.attach( '#myVideo' );
+
+<!-- Code to handle taking the snapshot and displaying it locally -->
+function take_snapshot() {
+
+ // take snapshot and get image data
+ Webcam.snap( function(data_uri) {
+  // display results in page
+  document.getElementById('results').innerHTML =
+  '<img src="'+data_uri+'"/>';
+  } );
+}
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

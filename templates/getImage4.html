@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+</head>
+
+<style>
+    /* mirror the image */
+    video, canvas {
+    transform: scale(-1, 1); /*For Firefox (& IE) */
+    -webkit-transform: scale(-1, 1); /*for Chrome & Opera (& Safari) */
+}
+
+</style>
+
+<body style="background-color: #2578ce;">
+<h1 style="color: #fffecc; text-align: center; font-weight: bold; margin-bottom: 25px;">Employee Attendance</h1>
+<div class="container" style="text-align: center;">
+    <input id="latitude" name="latitude" type=hidden>
+    <input id="longitude" name="longitude" type=hidden>
+    <input id="altitude" name="altitude" type=hidden>
+    <div class="row">
+        <div class="col-6 col-sm-12">
+            <video autoplay id="myVideo"></video>
+        </div>
+    </div>
+    <div class="row">
+        <dov class="col-12">
+            <p style="color: red; text-align: center; font-weight: bold; margin-bottom: 15px; font-size:20px;">Please blink your eyes frequently for 2 to 3 seconds to give attendance</p>
+        </dov>
+    </div>
+    <div class="row">
+        <div class="col-6" style="width:100%;">
+            <!--            <button style="margin-left:14%;" class="btn btn-success" onclick="startRecognition()" type="button">Start Recognition</button>-->
+            <button class="btn btn-success" onclick="sendImagefromCanvas()" style="margin-left:14%;" type="button">Start
+                Recognition
+            </button>
+        </div>
+        <div class="col-6">
+            {% if my_dict %}
+            <h3 style="color: #fffecc; text-align: left; font-weight: bold; margin-bottom: 10px;">Office Name: <span
+                    style="color: #fffecc; font-weight: bold; font-size:18px;">{{my_dict.branch_code}}</span></h3>
+            <input hidden id="branch_code" type="text" value="{{my_dict.branch_code}}">
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script>
+
+var ip;
+var cnt=1;
+var total_capture=10;
+var wait_time=1000;
+$.getJSON("https://api.ipify.org?format=json",
+                                          function(data) {
+
+            // Setting text of element P with id gfg
+            $("#gfg").html(data.ip);
+            ip = data['ip'];
+})
+
+var video = document.querySelector("#myVideo");
+let v = document.getElementById("myVideo");
+//create a canvas to grab an image for upload
+let imageCanvas = document.createElement('canvas');
+let imageCtx = imageCanvas.getContext("2d");
+var time = 1;
+
+navigator.getMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+
+function startRecognition(){
+
+  $(".btn").removeClass("btn-success").addClass("btn-danger");
+  document.querySelector('.btn').innerHTML = 'Recognizing.....';
+
+  navigator.getMedia({video: true}, function(stream) {
+
+  // webcam is available
+  video.srcObject = stream;
+  var interval = setInterval(function() {
+  time = 1;
+   if (time == 1) {
+   }
+   else {
+      clearInterval(interval);
+   }
+   }, 7000);
+
+}, function() {
+    alert("You have to give the permission to access the webcam and reload it again");
+  // webcam is not available
+});
+}
+
+
+    //Add file blob to a form and post
+    function postFile(file) {
+        var branch_code = document.getElementById("branch_code").value;
+        console.log('bc cod:', branch_code);
+        let formdata = new FormData();
+        formdata.append("image", file);
+        formdata.append("branch_code", branch_code);
+        formdata.append("ip", ip);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/image', true);
+        xhr.onload = function () {
+            if (this.status === 200)
+            {
+                console.log('outside if response is: '+this.response);
+                var response = this.response;
+                msg = response.slice(0,15)
+                var empcde = response.split("/");
+                empcde = empcde[empcde.length-1]
+                if(msg == 'face_recognized')
+                {
+                    var today = new Date();
+                    var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+                    var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+                    var dateTime = date+' '+time;
+                    console.log('inside if response is: '+this.response);
+                    alert("Recognized Successfully!\nAttendance Log is: "+dateTime+"\nEmployee ID is: "+empcde);
+                    window.location.reload();
+                }
+
+                else if (this.response == 'face_unrecognized')
+                {
+                    console.log('inside if response is: '+this.response);
+                    alert("Recognized Unsuccessful!");
+                    window.location.reload();
+                }
+
+                else if (this.response == 'retake_image_from_webcam')
+                {
+                    console.log('inside if response is: '+this.response);
+                    sendImagefromCanvas()
+                }
+
+                else if (this.response == 'device_found')
+                {
+                    console.log('inside if response is: '+this.response);
+                    alert("device found");
+                    window.location.reload();
+                }
+
+            }
+            else
+                console.error(xhr);
+        };
+        xhr.send(formdata);
+        console.log("Send ")
+
+    }
+
+    //Get the image from the canvas
+    function sendImagefromCanvas() {
+
+        $(".btn").removeClass("btn-success").addClass("btn-danger");
+        document.querySelector('.btn').innerHTML = 'Recognizing.....';
+
+        //Make sure the canvas is set to the current video size
+        imageCanvas.width = v.videoWidth;
+        imageCanvas.height = v.videoHeight;
+
+        imageCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight);
+
+        //Convert the canvas to blob and post the file
+        imageCanvas.toBlob(postFile, 'image/jpeg');
+
+    }
+
+    window.onload = function () {
+
+        //Get camera video
+        navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: false})
+            .then(stream => {
+                v.srcObject = stream;
+            })
+            .catch(err => {
+                console.log('navigator.getUserMedia error: ', err)
+            });
+    };
+
+</script>
+</body>
+</html>
